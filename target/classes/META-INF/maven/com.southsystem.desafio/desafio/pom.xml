@@ -10,7 +10,7 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.southsystem.desafio</groupId>
-	<artifactId>authuser</artifactId>
+	<artifactId>desafio</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>desafio</name>
 	<description>Desafio Técnico</description>

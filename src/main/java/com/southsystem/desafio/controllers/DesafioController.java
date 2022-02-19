@@ -1,5 +1,7 @@
 package com.southsystem.desafio.controllers;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -10,13 +12,9 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -92,11 +90,39 @@ public class DesafioController {
 	@Transactional
     @PostMapping("/votos")
     public ResponseEntity<Object> salvarVotos(@Valid @NotNull @RequestParam(value="sessaoID") UUID sessaoID,  @RequestBody  VotosDto votosDto){
-        log.debug("Votaçao {} ", votosDto.toString());        
+        log.debug("Votaçao {} ", votosDto.toString());  
+        
+		List<SessaoModel> listaTempoSessao = sessaoService.findTempoSessao(sessaoID);
+		if (!listaTempoSessao.isEmpty()) {
+	        var dataHoraAtual = LocalDateTime.now(ZoneId.of("UTC"));
+			var dataHoraInicioSessao = listaTempoSessao.get(0).getIniciosessao();
+			var minutosParaEncerrarSessao = listaTempoSessao.get(0).getTemposessao();
+			var dataHoraEncerramentoVotacao = dataHoraInicioSessao.plusMinutes(minutosParaEncerrarSessao);
+			
+			if (dataHoraAtual.isAfter(dataHoraEncerramentoVotacao)) {
+				log.warn("Tempo de votação expirado {} ", dataHoraAtual);
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Tempo de votação expirado.");
+			}
+	        
+		} else {
+			log.warn("O tempo da sessão não está cadastrado, favor verificar. {} ", votosDto.getCpf());
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("O tempo da sessão não está cadastrado, favor verificar.");
+		}
+		
+        
+        Optional<SessaoModel> sessaoModelOptional = sessaoService.findById(sessaoID);        
+        if(!sessaoModelOptional.isPresent()) {
+        	log.warn("Sessão não encontrada {} ", votosDto.getSessaoID());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Sessão não encontrada.");
+        }
+        
         boolean votosModelOptional = votosService.existsByCpf(votosDto.getCpf());
         if(votosModelOptional) {
+        	log.warn("CPF já cadastrado para essa votação {} ", votosDto.getCpf());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("CPF já cadastrado para essa votação.");
         }
+        
+
         var votosModel = new VotosModel();
         BeanUtils.copyProperties(votosDto, votosModel);
         votosModel.setSessaoID(sessaoID);

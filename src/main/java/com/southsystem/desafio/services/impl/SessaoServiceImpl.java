@@ -1,5 +1,9 @@
 package com.southsystem.desafio.services.impl;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +22,15 @@ public class SessaoServiceImpl implements SessaoService {
     public void save(SessaoModel sessaoModel) {
     	sessaoRepository.save(sessaoModel);
     }
+    
+	@Override
+	public Optional<SessaoModel> findById(UUID sessaoId) {
+		return sessaoRepository.findById(sessaoId);
+	}
 
+	@Override
+	public List<SessaoModel> findTempoSessao(UUID sessaoId) {
+		return sessaoRepository.findTempoSessao(sessaoId);
+	}
    
 }

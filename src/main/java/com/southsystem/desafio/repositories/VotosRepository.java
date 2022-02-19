@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.southsystem.desafio.models.VotosModel;
 
 public interface VotosRepository extends JpaRepository<VotosModel, UUID> {
-
+	
+	boolean existsByCpf(String cpf);
+	
 
 }

@@ -1,20 +1,26 @@
 package com.southsystem.desafio.controllers;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import javax.transaction.Transactional;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.southsystem.desafio.dtos.PautaDto;
@@ -59,10 +65,9 @@ public class DesafioController {
     
 
 	@Transactional
-    @PostMapping("/aberturaSessao/pauta/{pautaID}")
-    public ResponseEntity<Object> abrirSessao(@PathVariable(value="pautaID") UUID pautaID, @RequestBody  SessaoDto sessaoDto){
-        log.debug("abrirSessao {} ", sessaoDto.toString());
-        
+    @PostMapping("/aberturaSessao")
+    public ResponseEntity<Object> abrirSessao(@Valid @NotNull @RequestParam(value="pautaID") UUID pautaID, @RequestBody  SessaoDto sessaoDto){
+        log.debug("abrirSessao {} ", sessaoDto.toString());        
         Optional<PautaModel> pautaModelOptional = pautaService.findById(pautaID);
         if(!pautaModelOptional.isPresent()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pauta não encontrada.");
@@ -85,17 +90,21 @@ public class DesafioController {
     }
     
 	@Transactional
-    @PostMapping("/votos/pauta/{pautaID}/sessao/{sessaoID}")
-    public ResponseEntity<Object> salvarVotos(@PathVariable(value="pautaID") UUID pautaID, @PathVariable(value="sessaoID") UUID sessaoID,  @RequestBody  VotosDto votosDto){
-        log.debug("Votaçao {} ", votosDto.toString());
+    @PostMapping("/votos")
+    public ResponseEntity<Object> salvarVotos(@Valid @NotNull @RequestParam(value="sessaoID") UUID sessaoID,  @RequestBody  VotosDto votosDto){
+        log.debug("Votaçao {} ", votosDto.toString());        
+        boolean votosModelOptional = votosService.existsByCpf(votosDto.getCpf());
+        if(votosModelOptional) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("CPF já cadastrado para essa votação.");
+        }
         var votosModel = new VotosModel();
         BeanUtils.copyProperties(votosDto, votosModel);
-        votosModel.setPautaID(pautaID);
         votosModel.setSessaoID(sessaoID);
         votosService.save(votosModel);
         log.debug("Votos salvos {} ", votosModel);
         log.info("Votos salvos {} ", votosModel);
         return ResponseEntity.status(HttpStatus.CREATED).body(votosModel);
     }
+
 
 }

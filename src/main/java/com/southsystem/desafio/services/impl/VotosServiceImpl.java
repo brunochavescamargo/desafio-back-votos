@@ -1,5 +1,7 @@
 package com.southsystem.desafio.services.impl;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,15 @@ public class VotosServiceImpl implements VotosService {
     public void save(VotosModel votosModel) {
     	votosRepository.save(votosModel);
     }
+
+
+    @Override
+    public boolean existsByCpf(String cpf) {
+        return votosRepository.existsByCpf(cpf);
+    }
+
+
+
 
    
 }

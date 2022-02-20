@@ -20,7 +20,6 @@ public class VotosDto {
 	private UUID votosID;
 	@JoinColumn(name="sessaoID")
 	private SessaoModel sessao;
-	
 	private String cpf;
 	private StatusVotos statusVotos;
 }

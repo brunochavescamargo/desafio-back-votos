@@ -1,5 +1,7 @@
 package com.southsystem.desafio.services.impl;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -8,7 +10,10 @@ import java.util.UUID;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.southsystem.desafio.dtos.VotosDto;
 import com.southsystem.desafio.models.SessaoModel;
@@ -27,6 +32,9 @@ public class VotosServiceImpl implements VotosService {
 
 	@Autowired
 	SessaoServiceImpl sessaoServiceImpl;
+	
+    @Autowired
+    RestTemplate restTemplate;
 
 	@Override
 	public void save(VotosModel votosModel) {
@@ -49,7 +57,21 @@ public class VotosServiceImpl implements VotosService {
 	}
 
 	public Optional<?> salvarVotos(List<SessaoModel> listaTempoSessao, UUID sessaoID, VotosDto votosDto) {
-
+		
+		final String baseUrl = "https://user-info.herokuapp.com/users/"+votosDto.getCpf();
+		URI uri = null;
+		try {
+			uri = new URI(baseUrl);
+		} catch (URISyntaxException e) {
+			log.info(e.getMessage());
+		}
+		 
+		ResponseEntity<String> result = restTemplate.getForEntity(uri, String.class);
+		if (result.getStatusCodeValue() == 404) {
+			log.warn("Usuário não possui permissão para votar");
+			return Optional.of("Usuário não possui permissão para votar");
+		}
+		
 		if (!listaTempoSessao.isEmpty()) {
 			var dataHoraAtual = LocalDateTime.now(ZoneId.of("UTC"));
 			var dataHoraInicioSessao = listaTempoSessao.get(0).getIniciosessao();

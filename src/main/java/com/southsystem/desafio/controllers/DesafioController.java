@@ -30,13 +30,15 @@ import com.southsystem.desafio.services.impl.PautaServiceImpl;
 import com.southsystem.desafio.services.impl.SessaoServiceImpl;
 import com.southsystem.desafio.services.impl.VotosServiceImpl;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RequestMapping("/desafio/v1")
-
+@Api(value = "desafio-controller")
 public class DesafioController {
 	
 	@Autowired
@@ -50,6 +52,7 @@ public class DesafioController {
     
 	@Transactional
     @PostMapping("/pauta")
+	@ApiOperation(value = "Criar Pauta")
     public ResponseEntity<Object> salvarPauta(@RequestBody @Valid PautaDto pautaDto){
         log.debug("Método salvarPauta {} ", pautaDto.toString());
         var pautaModel = new PautaModel();
@@ -62,6 +65,7 @@ public class DesafioController {
     
 	@Transactional
     @PostMapping("/aberturaSessao")
+	@ApiOperation(value = "Abertura de Sessão")
     public ResponseEntity<?> abrirSessao(@Valid @NotNull @RequestParam(value="pautaID") UUID pautaID, @RequestBody  SessaoDto sessaoDto){
         log.debug("abrirSessao {} ", sessaoDto.toString());        
         Optional<PautaModel> pautaModelOptional = pautaServiceImpl.findById(pautaID);
@@ -73,6 +77,7 @@ public class DesafioController {
     
 	@Transactional
     @PostMapping("/votos")
+	@ApiOperation(value = "Votar")
     public ResponseEntity<?> salvarVotos(@Valid @NotNull @RequestParam(value="sessaoID") UUID sessaoID,  @RequestBody  VotosDto votosDto){
         log.debug("Votaçao {} ", votosDto.toString());  
 		List<SessaoModel> listaTempoSessao = sessaoServiceImpl.findTempoSessao(sessaoID);
@@ -82,6 +87,7 @@ public class DesafioController {
 	}
 	
     @GetMapping("/votos")
+    @ApiOperation(value = "Contar Votos")
     public ResponseEntity<?> getContagemVotosSessao(@Valid @NotNull @RequestParam(value="sessaoID") UUID sessaoID){
     	log.debug("Contagem Votos"); 
     	List<?> listaContagemVotosSim =  votosServiceImpl.findContagemVotacaoSessaoSim(sessaoID);

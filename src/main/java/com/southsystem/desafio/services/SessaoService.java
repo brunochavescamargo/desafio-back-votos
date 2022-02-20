@@ -14,7 +14,7 @@ public interface SessaoService {
     
     public List<SessaoModel> findTempoSessao(@Param("sessaoId") UUID sessaoId);
     
-    public List<?> findDescricaoPauta(@Param("sessaoId") UUID sessaoId);
+    public String findDescricaoPauta(@Param("sessaoId") UUID sessaoId);
     
     public List<?> findPautaNaSessao(UUID pautaID);
 }

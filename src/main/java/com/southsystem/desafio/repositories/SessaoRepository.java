@@ -14,7 +14,7 @@ public interface SessaoRepository extends JpaRepository<SessaoModel, UUID> {
 	public List<SessaoModel> findTempoSessao(@Param("sessaoId") UUID sessaoId);
     
     @Query(value = "select descricao from tb_pauta a join tb_sessao b on a.pautaid = b.pautaid_pautaid where b.sessaoid = ?", nativeQuery = true)
-	public List<?> findIdPauta(@Param("sessaoId") UUID sessaoId);
+	public String findIdPauta(@Param("sessaoId") UUID sessaoId);
     
     @Query(value = "select iniciosessao from tb_sessao a where pautaid_pautaid = ? ", nativeQuery = true)
     public List<?> findPautaNaSessao(@Param("pautaid") UUID pautaId);

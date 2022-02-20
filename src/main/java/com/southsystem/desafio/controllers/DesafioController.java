@@ -90,11 +90,15 @@ public class DesafioController {
     @ApiOperation(value = "Contar Votos")
     public ResponseEntity<?> getContagemVotosSessao(@Valid @NotNull @RequestParam(value="sessaoID") UUID sessaoID){
     	log.debug("Contagem Votos"); 
-    	List<?> listaContagemVotosSim =  votosServiceImpl.findContagemVotacaoSessaoSim(sessaoID);
-    	List<?> listaContagemVotosNao =  votosServiceImpl.findContagemVotacaoSessaoNao(sessaoID);
-    	List<?> listaDescricaoPauta   =  sessaoServiceImpl.findDescricaoPauta(sessaoID);
-		Optional<?> contagemVotosOptional = votosServiceImpl.contagemVotos(listaContagemVotosSim, listaContagemVotosNao, listaDescricaoPauta, sessaoID);
-		return ResponseEntity.status(contagemVotosOptional.get() instanceof VotosModel ? HttpStatus.CREATED :  HttpStatus.NOT_FOUND).
-				body(contagemVotosOptional.get());
+    	Integer contagemVotosSim =  votosServiceImpl.findContagemVotacaoSessaoSim(sessaoID);
+    	Integer contagemVotosNao =  votosServiceImpl.findContagemVotacaoSessaoNao(sessaoID);
+    	String descricaoPauta   =  sessaoServiceImpl.findDescricaoPauta(sessaoID);
+
+    	Optional<?> contagemVotosOptional = votosServiceImpl.contagemVotos(contagemVotosSim, contagemVotosNao, descricaoPauta, sessaoID);
+
+    	boolean sucesso = contagemVotosOptional.isPresent();
+
+    	return ResponseEntity.status(sucesso ? HttpStatus.CREATED :  HttpStatus.NOT_FOUND).
+				body(sucesso ? contagemVotosOptional.get() : "Nenhum voto disponível para essa pauta");
     }
 }

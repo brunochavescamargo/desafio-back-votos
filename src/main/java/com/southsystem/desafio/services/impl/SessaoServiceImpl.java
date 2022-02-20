@@ -39,7 +39,7 @@ public class SessaoServiceImpl implements SessaoService {
 	}
 
 	@Override
-	public List<?> findDescricaoPauta(UUID sessaoId) {
+	public String findDescricaoPauta(UUID sessaoId) {
 		return sessaoRepository.findIdPauta(sessaoId);
 	}
 	

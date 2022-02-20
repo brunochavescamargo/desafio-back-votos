@@ -47,18 +47,18 @@ public class VotosServiceImpl implements VotosService {
 	}
 
 	@Override
-	public List<?> findContagemVotacaoSessaoSim(UUID sessaoId) {
+	public Integer findContagemVotacaoSessaoSim(UUID sessaoId) {
 		return votosRepository.findContagemVotacaoSessaoSim(sessaoId);
 	}
 	
 	@Override
-	public List<?> findContagemVotacaoSessaoNao(UUID sessaoId) {
+	public Integer findContagemVotacaoSessaoNao(UUID sessaoId) {
 		return votosRepository.findContagemVotacaoSessaoNao(sessaoId);
 	}
 
 	public Optional<?> salvarVotos(List<SessaoModel> listaTempoSessao, UUID sessaoID, VotosDto votosDto) {
 		
-		final String baseUrl = "https://user-info.herokuapp.com/users/"+votosDto.getCpf();
+		final String baseUrl = "https://user-info.herokuapp.com/users/" + votosDto.getCpf();
 		URI uri = null;
 		try {
 			uri = new URI(baseUrl);
@@ -107,15 +107,16 @@ public class VotosServiceImpl implements VotosService {
 		return Optional.of(votosModel);
 	}
 	
-	public Optional<?> contagemVotos(List<?> listaContagemVotosSim, List<?> listaContagemVotosNao, List<?> listaIdPauta, UUID sessaoID) {
-    	if (listaContagemVotosSim.size() > 1 && listaContagemVotosNao.size() > 1) {
-    		listaIdPauta =  sessaoServiceImpl.findDescricaoPauta(sessaoID);
-    		return Optional.of("Resultado da Votação para a Pauta -> " + listaIdPauta.get(0) + ":\nSIM: " + listaContagemVotosSim.get(0) + 
-    				" Não: " + listaContagemVotosNao.get(0));
-    	} else {
-    		log.warn("Nenhum voto disponível para essa pauta {} ");
-    		return Optional.of("Nenhum voto disponível para essa pauta");
-    	}
+	public Optional<?> contagemVotos(Integer contagemVotosSim, Integer contagemVotosNao, String idPauta,
+			UUID sessaoID) {
+		if (contagemVotosSim == 0 && contagemVotosNao == 0) {
+
+			log.warn("Nenhum voto disponível para essa pauta {} ");
+			return Optional.empty();
+		} else {
+			return Optional.of("Resultado da Votação para a Pauta -> " + idPauta+ ":\nSIM: "
+					+ contagemVotosSim + " Não: " + contagemVotosNao);
+		}
 	}
 
 }

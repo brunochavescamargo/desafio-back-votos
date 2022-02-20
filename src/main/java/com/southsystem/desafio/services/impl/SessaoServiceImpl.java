@@ -14,9 +14,11 @@ import com.southsystem.desafio.models.SessaoModel;
 import com.southsystem.desafio.repositories.SessaoRepository;
 import com.southsystem.desafio.services.SessaoService;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Service
+@AllArgsConstructor
 public class SessaoServiceImpl implements SessaoService {
 
     @Autowired

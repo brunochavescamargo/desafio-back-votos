@@ -10,6 +10,8 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import com.southsystem.desafio.enums.StatusVotos;
@@ -25,8 +27,11 @@ public class VotosModel implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private UUID votosID;
-
-	private UUID sessaoID;
+	
+    @ManyToOne
+    @JoinColumn(name="sessaoID")
+    private SessaoModel sessao;
+	
 
 	@Column(nullable = false, length = 20)
 	private String cpf;

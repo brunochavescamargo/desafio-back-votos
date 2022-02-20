@@ -8,15 +8,18 @@ import javax.validation.constraints.NotBlank;
 
 import com.southsystem.desafio.models.PautaModel;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SessaoDto {	
 	
     private UUID sessaoID;
     @NotBlank
     @Id
     private PautaModel pautaID;
-    @NotBlank
     private LocalDateTime iniciosessao;
     private Long temposessao;
 	

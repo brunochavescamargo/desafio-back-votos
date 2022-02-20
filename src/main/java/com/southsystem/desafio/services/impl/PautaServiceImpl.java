@@ -28,5 +28,4 @@ public class PautaServiceImpl implements PautaService {
 		return pautaRepository.findById(pautaId);
 	}
 
-   
 }

@@ -1,7 +1,5 @@
 package com.southsystem.desafio.controllers;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,27 +26,27 @@ import com.southsystem.desafio.dtos.VotosDto;
 import com.southsystem.desafio.models.PautaModel;
 import com.southsystem.desafio.models.SessaoModel;
 import com.southsystem.desafio.models.VotosModel;
-import com.southsystem.desafio.services.PautaService;
-import com.southsystem.desafio.services.SessaoService;
-import com.southsystem.desafio.services.VotosService;
+import com.southsystem.desafio.services.impl.PautaServiceImpl;
+import com.southsystem.desafio.services.impl.SessaoServiceImpl;
+import com.southsystem.desafio.services.impl.VotosServiceImpl;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
-@RequestMapping("/desafio")
+@RequestMapping("/desafio/v1")
 
 public class DesafioController {
 	
 	@Autowired
-	PautaService pautaService;
+	PautaServiceImpl pautaServiceImpl;
 	
 	@Autowired
-	SessaoService sessaoService;
+	SessaoServiceImpl sessaoServiceImpl;
 	
 	@Autowired
-	VotosService votosService;
+	VotosServiceImpl votosServiceImpl;
     
 	@Transactional
     @PostMapping("/pauta")
@@ -55,82 +54,41 @@ public class DesafioController {
         log.debug("Método salvarPauta {} ", pautaDto.toString());
         var pautaModel = new PautaModel();
         BeanUtils.copyProperties(pautaDto, pautaModel);
-        pautaService.save(pautaModel);
+        pautaServiceImpl.save(pautaModel);
         log.debug("Pauta salva {} ", pautaModel);
         log.info("Pauta salva {} ", pautaModel);
         return ResponseEntity.status(HttpStatus.CREATED).body(pautaModel);
     }
     
-
 	@Transactional
     @PostMapping("/aberturaSessao")
-    public ResponseEntity<Object> abrirSessao(@Valid @NotNull @RequestParam(value="pautaID") UUID pautaID, @RequestBody  SessaoDto sessaoDto){
+    public ResponseEntity<?> abrirSessao(@Valid @NotNull @RequestParam(value="pautaID") UUID pautaID, @RequestBody  SessaoDto sessaoDto){
         log.debug("abrirSessao {} ", sessaoDto.toString());        
-        Optional<PautaModel> pautaModelOptional = pautaService.findById(pautaID);
-        if(!pautaModelOptional.isPresent()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pauta não encontrada.");
-        }
-		else {
-
-			var sessaoModel = new SessaoModel();
-			BeanUtils.copyProperties(sessaoDto, sessaoModel);
-			if (sessaoDto.getTemposessao() == null) {
-				sessaoModel.setTemposessao(1L);
-			} else {
-				sessaoModel.setTemposessao(sessaoDto.getTemposessao());
-			}
-			sessaoModel.setPautaID(pautaID);
-			sessaoService.save(sessaoModel);
-			log.debug("Abertura Sessão salva {} ", sessaoModel);
-			log.info("Abertura Sessão salva {} ",  sessaoModel);
-			return ResponseEntity.status(HttpStatus.CREATED).body(sessaoModel);
-		}
+        Optional<PautaModel> pautaModelOptional = pautaServiceImpl.findById(pautaID);
+        Optional<SessaoModel> sessaoModel = sessaoServiceImpl.abrirSessao(pautaID, sessaoDto, pautaModelOptional);
+        boolean pautaExiste = sessaoModel.isPresent();
+        return ResponseEntity.status(pautaExiste? HttpStatus.CREATED : HttpStatus.NOT_FOUND).
+        		body(pautaExiste? sessaoModel.get(): "Verifique se a pauta já está cadastrada para a sessão.");
     }
     
 	@Transactional
     @PostMapping("/votos")
-    public ResponseEntity<Object> salvarVotos(@Valid @NotNull @RequestParam(value="sessaoID") UUID sessaoID,  @RequestBody  VotosDto votosDto){
+    public ResponseEntity<?> salvarVotos(@Valid @NotNull @RequestParam(value="sessaoID") UUID sessaoID,  @RequestBody  VotosDto votosDto){
         log.debug("Votaçao {} ", votosDto.toString());  
-        
-		List<SessaoModel> listaTempoSessao = sessaoService.findTempoSessao(sessaoID);
-		if (!listaTempoSessao.isEmpty()) {
-	        var dataHoraAtual = LocalDateTime.now(ZoneId.of("UTC"));
-			var dataHoraInicioSessao = listaTempoSessao.get(0).getIniciosessao();
-			var minutosParaEncerrarSessao = listaTempoSessao.get(0).getTemposessao();
-			var dataHoraEncerramentoVotacao = dataHoraInicioSessao.plusMinutes(minutosParaEncerrarSessao);
-			
-			if (dataHoraAtual.isAfter(dataHoraEncerramentoVotacao)) {
-				log.warn("Tempo de votação expirado {} ", dataHoraAtual);
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Tempo de votação expirado.");
-			}
-	        
-		} else {
-			log.warn("O tempo da sessão não está cadastrado, favor verificar. {} ", votosDto.getCpf());
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("O tempo da sessão não está cadastrado, favor verificar.");
-		}
-		
-        
-        Optional<SessaoModel> sessaoModelOptional = sessaoService.findById(sessaoID);        
-        if(!sessaoModelOptional.isPresent()) {
-        	log.warn("Sessão não encontrada {} ", votosDto.getSessaoID());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Sessão não encontrada.");
-        }
-        
-        boolean votosModelOptional = votosService.existsByCpf(votosDto.getCpf());
-        if(votosModelOptional) {
-        	log.warn("CPF já cadastrado para essa votação {} ", votosDto.getCpf());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("CPF já cadastrado para essa votação.");
-        }
-        
-
-        var votosModel = new VotosModel();
-        BeanUtils.copyProperties(votosDto, votosModel);
-        votosModel.setSessaoID(sessaoID);
-        votosService.save(votosModel);
-        log.debug("Votos salvos {} ", votosModel);
-        log.info("Votos salvos {} ", votosModel);
-        return ResponseEntity.status(HttpStatus.CREATED).body(votosModel);
+		List<SessaoModel> listaTempoSessao = sessaoServiceImpl.findTempoSessao(sessaoID);
+		Optional<?> salvarVotosOptional = votosServiceImpl.salvarVotos(listaTempoSessao, sessaoID, votosDto);
+		return ResponseEntity.status(salvarVotosOptional.get() instanceof VotosModel ? HttpStatus.CREATED :  HttpStatus.NOT_FOUND).
+				body(salvarVotosOptional.get());
+	}
+	
+    @GetMapping("/votos")
+    public ResponseEntity<?> getContagemVotosSessao(@Valid @NotNull @RequestParam(value="sessaoID") UUID sessaoID){
+    	log.debug("Contagem Votos"); 
+    	List<?> listaContagemVotosSim =  votosServiceImpl.findContagemVotacaoSessaoSim(sessaoID);
+    	List<?> listaContagemVotosNao =  votosServiceImpl.findContagemVotacaoSessaoNao(sessaoID);
+    	List<?> listaDescricaoPauta   =  sessaoServiceImpl.findDescricaoPauta(sessaoID);
+		Optional<?> contagemVotosOptional = votosServiceImpl.contagemVotos(listaContagemVotosSim, listaContagemVotosNao, listaDescricaoPauta, sessaoID);
+		return ResponseEntity.status(contagemVotosOptional.get() instanceof VotosModel ? HttpStatus.CREATED :  HttpStatus.NOT_FOUND).
+				body(contagemVotosOptional.get());
     }
-
-
 }
